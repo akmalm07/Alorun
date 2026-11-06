@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "Alorun",
+    "slug": "alorun",
+    "scheme": "alorun",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "plugins": ["expo-router"],
+    "android": { "package": "com.alorun.app" }
+  }
+}
