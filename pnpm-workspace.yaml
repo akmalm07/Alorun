@@ -1,0 +1,4 @@
+allowBuilds:
+  '@scarf/scarf': false
+  '@sentry/cli': true
+  esbuild: true
