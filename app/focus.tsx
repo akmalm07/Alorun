@@ -1,0 +1,2 @@
+import { Body, ButtonLink, Card, Screen } from '../src/ui/shell';
+export default function Focus(){return <Screen eyebrow="A moment to focus" title="One thing at a time." subtitle="There's no need to do everything at once."><Card tone="green"><Body>Focus sessions will begin from a task when task management is connected. You will always choose the outcome yourself.</Body><ButtonLink href="/tasks" secondary>View tasks</ButtonLink></Card></Screen>}

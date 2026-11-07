@@ -1,21 +1,3 @@
-import { StyleSheet, Text, View } from 'react-native';
-
-export default function HomeScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Hello, world!</Text>
-      <Text style={styles.subtitle}>Welcome to Alorun.</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f7f8fc',
-  },
-  title: { fontSize: 32, fontWeight: '700', color: '#252a40' },
-  subtitle: { marginTop: 12, fontSize: 18, color: '#5c637b' },
-});
+import { Text, View } from 'react-native';
+import { Body, ButtonLink, Card, colors, Label, Screen, Section } from '../src/ui/shell';
+export default function Today() { const day = new Intl.DateTimeFormat(undefined, {weekday:'long', month:'long', day:'numeric'}).format(new Date()); return <Screen eyebrow={day} title="A little progress, every day." subtitle="Make room for what matters, one step at a time."><Card tone="green"><Label>Your space to begin</Label><Text style={{fontSize:23,lineHeight:29,color:colors.ink,fontWeight:'600',letterSpacing:-.5}}>What would feel good to move forward today?</Text><View style={{marginTop:10}}><Body>Start with a small intention. You can make a plan that fits your day.</Body></View><ButtonLink href="/tasks">Explore your tasks  ↗</ButtonLink></Card><Section title="Your priorities" action="View tasks" href="/tasks"/><Card><Text style={{fontSize:16,fontWeight:'700',color:colors.ink,marginBottom:6}}>A clear space to start</Text><Body>Your priorities will appear here when task management is connected.</Body></Card><Section title="The bigger picture" action="View goals" href="/goals"/><Card tone="peach"><Label>Goals & growth</Label><Text style={{fontSize:18,fontWeight:'700',color:colors.ink,marginBottom:6}}>Keep your why close.</Text><Body>Your goals will have a home here, ready to guide the little steps.</Body><ButtonLink href="/goals" secondary>Explore goals</ButtonLink></Card></Screen> }

@@ -1,0 +1,3 @@
+import { Text } from 'react-native';
+import { Body, ButtonLink, Card, colors, Screen, Section } from '../src/ui/shell';
+export default function Goals(){return <Screen eyebrow="The bigger picture" title="Your goals." subtitle="Keep sight of where you want to go, without rushing the journey."><Card tone="peach"><Text style={{fontSize:19,fontWeight:'600',color:colors.ink,marginBottom:8}}>Start with what matters.</Text><Body>Goal creation, milestones, and linked tasks can be built here when the underlying services are ready.</Body></Card><Section title="Your goals"/><Card><Body>No goals to show yet.</Body><ButtonLink href="/" secondary>Back to Today</ButtonLink></Card></Screen>}

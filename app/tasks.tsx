@@ -1,0 +1,3 @@
+import { Text } from 'react-native';
+import { Body, ButtonLink, Card, colors, Screen, Section } from '../src/ui/shell';
+export default function Tasks(){return <Screen eyebrow="Your next steps" title="Tasks." subtitle="A little structure for the things on your mind."><Card tone="green"><Text style={{fontSize:19,fontWeight:'600',color:colors.ink,marginBottom:8}}>One step at a time.</Text><Body>Task creation and syncing are the next building blocks. This space is ready for your task list and quick capture flow.</Body></Card><Section title="Your tasks"/><Card><Body>No tasks to show yet.</Body><ButtonLink href="/" secondary>Back to Today</ButtonLink></Card></Screen>}

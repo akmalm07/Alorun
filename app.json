@@ -5,7 +5,13 @@
     "scheme": "alorun",
     "version": "1.0.0",
     "orientation": "portrait",
-    "plugins": ["expo-router"],
-    "android": { "package": "com.alorun.app" }
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      "expo-secure-store"
+    ],
+    "android": {
+      "package": "com.alorun.app"
+    }
   }
 }
