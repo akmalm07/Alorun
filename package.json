@@ -8,7 +8,6 @@
     "@nestjs/core": "12.3.3",
     "@nestjs/platform-express": "12.3.3",
     "@nestjs/swagger": "12.1.0",
-    "@prisma/client": "6.19.2",
     "@sentry/nestjs": "11.11.0",
     "@sentry/react-native": "8.28.0",
     "@supabase/supabase-js": "2.119.0",
@@ -41,13 +40,14 @@
     "drizzle-kit": "0.31.11",
     "eslint": "10.14.0",
     "prettier": "3.9.10",
-    "prisma": "6.19.2",
     "typescript": "6.0.3"
   },
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   }
 }

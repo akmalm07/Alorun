@@ -1,3 +1,5 @@
+> Superseded by [ADR 0002](0002-drizzle.md). This document records the previous decision.
+
 # 0001: Use Prisma for the PostgreSQL schema
 
 ## Context and decision

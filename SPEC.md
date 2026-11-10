@@ -171,7 +171,7 @@ Primary initial segment: students and early-career professionals; do not general
 | Backend | NestJS + TypeScript, REST + OpenAPI | Modular APIs and strong typing |
 | Validation/contracts | Zod shared schemas | Versioned boundary validation |
 | DB | Supabase PostgreSQL | Auth adjacency, transactions, managed backups |
-| ORM / migrations | Prisma ORM + checked-in SQL migrations | User-directed choice; see ADR 0001 for database-specific SQL |
+| ORM / migrations | Drizzle ORM + checked-in SQL migrations | User-directed choice; see ADR 0002 for database-specific SQL |
 | Search | PostgreSQL full-text + pgvector | Keyword and semantic retrieval |
 | Graph | `memory_nodes` + `memory_edges` in PostgreSQL | No second DB initially |
 | Jobs | Graphile Worker with proper PostgreSQL connection | Durable scheduled/background tasks |

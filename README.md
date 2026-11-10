@@ -17,8 +17,10 @@ Install Android Studio, the Android SDK and an Android Virtual Device through De
 
 ## Database schema
 
-The Prisma models and reviewed SQL live in `prisma/`. Copy `.env.example` to a secure local environment file and provide the Supabase transaction pooler URL as `DATABASE_URL` and session pooler URL as `DIRECT_URL`; never commit credentials. Prisma's CLI needs these variables exported (or loaded from `.env`), since it does not automatically load `.env.local`.
+Drizzle models live in `db/schema.ts`; checked-in migrations are in `drizzle/`. Copy `.env.example` to a secure local environment file and export the Supabase transaction pooler URL as `DATABASE_URL` and session pooler URL as `DIRECT_URL`. Never commit credentials. Run `pnpm db:generate` to generate a reviewed migration and `pnpm db:migrate` to apply it with the session connection.
 
-The initial migration assumes a clean Supabase project, the `auth.users` table, and pgvector in the `extensions` schema. It enables deny-by-default RLS: direct client access is unavailable until deliberately designed policies are added. It uses SQL-only tenant constraints, so do not run `prisma db push` or overwrite the migration with generated SQL. Test on staging, review existing objects and extension placement, and verify backups before deploying to production. See [ADR 0001](docs/adr/0001-prisma.md) for limitations and rollback considerations.
+The initial migration assumes a clean Supabase project, `auth.users`, and pgvector in the `extensions` schema. It enables deny-by-default RLS and includes SQL-only features, including the external auth foreign key and full-text index. Never use `drizzle-kit push`; review generated migrations against those features. Test on staging, review existing objects and extension placement, and verify backups before production. See [ADR 0002](docs/adr/0002-drizzle.md).
 
-To validate on a disposable PostgreSQL instance with pgvector, create a stub `auth.users(id uuid primary key)`, apply `prisma/migrations/20261110000000_initial/migration.sql`, then run `tests/schema.sql` with `psql -v ON_ERROR_STOP=1`. Use fictional data only.
+The old Prisma migration is retained as historical evidence. Do not run the Drizzle baseline on a database where it was already applied: the migration histories are separate. An existing database needs a reviewed baseline/adoption procedure before Drizzle migrations are used.
+
+To validate on a disposable PostgreSQL instance with pgvector, create a stub `auth.users(id uuid primary key)`, run the initial SQL migration in `drizzle/`, then run `tests/schema.sql` with `psql -v ON_ERROR_STOP=1`. Use fictional data only.
