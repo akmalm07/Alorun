@@ -1,0 +1,250 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model UserProfile {
+  id                 String   @id @db.Uuid
+  timezone           String   @default("UTC")
+  locale             String   @default("en")
+  communicationStyle String?  @map("communication_style")
+  quietHoursStart    DateTime? @map("quiet_hours_start") @db.Time(0)
+  quietHoursEnd      DateTime? @map("quiet_hours_end") @db.Time(0)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@map("users_profile")
+}
+model PrivacySettings {
+  userId                              String   @id @map("user_id") @db.Uuid
+  saveChatHistory                     Boolean  @default(false) @map("save_chat_history")
+  persistentMemoryEnabled             Boolean  @default(false) @map("persistent_memory_enabled")
+  sensitiveMemoryRequiresConfirmation Boolean  @default(true) @map("sensitive_memory_requires_confirmation")
+  analyticsOptIn                      Boolean  @default(false) @map("analytics_opt_in")
+  updatedAt                           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  @@map("privacy_settings")
+}
+model Goal {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  title      String
+  motivation String?
+  status     String   @default("active")
+  targetAt   DateTime? @map("target_at") @db.Timestamptz(6)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  @@unique([userId, id])
+  @@index([userId, status])
+  @@map("goals")
+}
+model Project {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  goalId    String?  @map("goal_id") @db.Uuid
+  title     String
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  @@unique([userId, id])
+  @@index([userId, goalId])
+  @@map("projects")
+}
+model Task {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  projectId      String?  @map("project_id") @db.Uuid
+  goalId         String?  @map("goal_id") @db.Uuid
+  title          String
+  description    String?
+  dueAt          DateTime? @map("due_at") @db.Timestamptz(6)
+  estimateMinutes Int?    @map("estimate_minutes")
+  priority       Int?
+  status         String   @default("pending")
+  recurrenceRule String?  @map("recurrence_rule")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  @@unique([userId, id])
+  @@index([userId, status, dueAt])
+  @@index([userId, projectId])
+  @@index([userId, goalId])
+  @@map("tasks")
+}
+model Habit {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String @map("user_id") @db.Uuid
+  title          String
+  recurrenceRule String @map("recurrence_rule")
+  status         String @default("active")
+  @@unique([userId, id])
+  @@index([userId, status])
+  @@map("habits")
+}
+model HabitEvent {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  habitId  String @map("habit_id") @db.Uuid
+  userId   String @map("user_id") @db.Uuid
+  dayLocal DateTime @map("day_local") @db.Date
+  result   String
+  @@unique([userId, habitId, dayLocal])
+  @@map("habit_events")
+}
+model ChatThread {
+  id        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String @map("user_id") @db.Uuid
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@unique([userId, id])
+  @@index([userId, createdAt])
+  @@map("chat_threads")
+}
+model ChatMessage {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  threadId       String @map("thread_id") @db.Uuid
+  userId         String @map("user_id") @db.Uuid
+  role           String
+  contentProtected String @map("content_protected")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  retentionUntil DateTime? @map("retention_until") @db.Timestamptz(6)
+  @@unique([userId, id])
+  @@index([userId, threadId, createdAt])
+  @@map("chat_messages")
+}
+model MemoryNode {
+  id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String @map("user_id") @db.Uuid
+  type          String
+  label         String
+  canonicalJson Json @map("canonical_json")
+  confidence    Float
+  confirmed     Boolean @default(false)
+  sensitivity   String
+  sourceRef     Json @map("source_ref")
+  observedAt    DateTime @map("observed_at") @db.Timestamptz(6)
+  validFrom     DateTime? @map("valid_from") @db.Timestamptz(6)
+  validUntil    DateTime? @map("valid_until") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@unique([userId, id])
+  @@index([userId, deletedAt])
+  @@map("memory_nodes")
+}
+model MemoryEdge {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String @map("user_id") @db.Uuid
+  sourceNodeId String @map("source_node_id") @db.Uuid
+  targetNodeId String @map("target_node_id") @db.Uuid
+  relationType String @map("relation_type")
+  confidence   Float
+  confirmed    Boolean @default(false)
+  sourceRef    Json @map("source_ref")
+  validFrom    DateTime? @map("valid_from") @db.Timestamptz(6)
+  validUntil   DateTime? @map("valid_until") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([userId, sourceNodeId, relationType])
+  @@index([userId, targetNodeId])
+  @@map("memory_edges")
+}
+model MemorySuggestion {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String @map("user_id") @db.Uuid
+  sourceMessageId String @map("source_message_id") @db.Uuid
+  proposalJson    Json @map("proposal_json")
+  status          String @default("pending")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@index([userId, status])
+  @@map("memory_suggestions")
+}
+model MemoryEmbedding {
+  nodeId    String @map("node_id") @db.Uuid
+  userId    String @map("user_id") @db.Uuid
+  modelId   String @map("model_id")
+  vector    Unsupported("vector")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  @@id([userId, nodeId, modelId])
+  @@map("memory_embeddings")
+}
+model FocusSession {
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String @map("user_id") @db.Uuid
+  taskId          String @map("task_id") @db.Uuid
+  startedAt       DateTime @default(now()) @map("started_at") @db.Timestamptz(6)
+  endedAt         DateTime? @map("ended_at") @db.Timestamptz(6)
+  outcome         String?
+  obstacle        String?
+  supportStrategy String? @map("support_strategy")
+  helpfulness     Int?
+  @@index([userId, taskId, startedAt])
+  @@map("focus_sessions")
+}
+model PlanProposal {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String @map("user_id") @db.Uuid
+  proposalJson Json @map("proposal_json")
+  status       String @default("pending")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  acceptedAt   DateTime? @map("accepted_at") @db.Timestamptz(6)
+  @@index([userId, status])
+  @@map("plan_proposals")
+}
+model NotificationPreference {
+  userId         String @id @map("user_id") @db.Uuid
+  morningEnabled Boolean @default(false) @map("morning_enabled")
+  eveningEnabled Boolean @default(false) @map("evening_enabled")
+  quietHours     Json? @map("quiet_hours")
+  localTimes     Json? @map("local_times")
+  @@map("notification_preferences")
+}
+model NotificationDelivery {
+  idempotencyKey String @id @map("idempotency_key")
+  userId         String @map("user_id") @db.Uuid
+  kind           String
+  sentAt         DateTime? @map("sent_at") @db.Timestamptz(6)
+  outcome        String
+  @@index([userId, kind])
+  @@map("notification_deliveries")
+}
+model CalendarConnection {
+  userId                   String @map("user_id") @db.Uuid
+  provider                 String
+  encryptedRefreshTokenRef String @map("encrypted_refresh_token_ref")
+  scopes                   String[]
+  lastSyncAt               DateTime? @map("last_sync_at") @db.Timestamptz(6)
+  @@id([userId, provider])
+  @@map("calendar_connections")
+}
+model Subscription {
+  userId           String @map("user_id") @db.Uuid
+  provider         String
+  productId        String @map("product_id")
+  status           String
+  entitlementUntil DateTime? @map("entitlement_until") @db.Timestamptz(6)
+  verifiedAt       DateTime? @map("verified_at") @db.Timestamptz(6)
+  @@id([userId, provider, productId])
+  @@map("subscriptions")
+}
+model UsageLedger {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String @map("user_id") @db.Uuid
+  periodKey    String @map("period_key")
+  operation    String
+  tokensIn     Int @map("tokens_in")
+  tokensOut    Int @map("tokens_out")
+  estimatedUsd Decimal @map("estimated_usd") @db.Decimal(14, 8)
+  requestId    String @map("request_id")
+  @@unique([userId, requestId, operation])
+  @@index([userId, periodKey])
+  @@map("usage_ledger")
+}
+model AuditEvent {
+  id                String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String @map("user_id") @db.Uuid
+  action            String
+  entity            String
+  entityId          String @map("entity_id")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  sanitizedMetadata Json? @map("sanitized_metadata")
+  @@index([userId, createdAt])
+  @@map("audit_events")
+}
