@@ -2,7 +2,7 @@
 
 ## Context and decision
 
-The user requested replacing Prisma with Drizzle. Define the schema in Drizzle and retain the reviewed initial SQL as the Drizzle baseline. The original Prisma migration remains unchanged as history. Runtime uses the transaction pooler; migration commands use the session pooler (`DIRECT_URL`).
+The user requested replacing Prisma with Drizzle. Define the schema in Drizzle and retain the reviewed initial SQL as the Drizzle baseline. The old Prisma files have been removed from the repository. Runtime uses the transaction pooler; migration commands use the session pooler (`DIRECT_URL`).
 
 ## Alternatives and tradeoffs
 
