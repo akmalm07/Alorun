@@ -1,8 +1,7 @@
 import { sql } from "drizzle-orm";
-import { pgTable, uuid, text, timestamp, time, date, integer, boolean, jsonb, doublePrecision, numeric, customType, primaryKey, index, uniqueIndex, foreignKey, check } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, time, date, integer, boolean, jsonb, doublePrecision, numeric, customType, primaryKey, index, uniqueIndex, foreignKey, check, vector } from "drizzle-orm/pg-core";
 
-// The dimension is intentionally unspecified until an embedding model is selected.
-const embeddingVector = customType<{ data: string }>({ dataType: () => "extensions.vector" });
+const EMBEDDING_DIMENSIONS = 1536;
 
 export const users_profile = pgTable("users_profile", {
   id: uuid("id").notNull().primaryKey(),
@@ -189,7 +188,7 @@ export const memory_embeddings = pgTable("memory_embeddings", {
   node_id: uuid("node_id").notNull(),
   user_id: uuid("user_id").notNull(),
   model_id: text("model_id").notNull(),
-  vector: embeddingVector("vector").notNull(),
+  vector: vector("vector", { dimensions: EMBEDDING_DIMENSIONS }).notNull(),
   updated_at: timestamp("updated_at", { withTimezone: true, precision: 6 }).defaultNow().notNull(),
 }, (t) => [
   primaryKey({ columns: [t.user_id, t.node_id, t.model_id] }),
