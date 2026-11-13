@@ -3,3 +3,16 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+chat-dev.sqlite*
+
+chat-encrypted.sqlite*
+
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.example.tfvars
+
+tfplan
+*.tfplan

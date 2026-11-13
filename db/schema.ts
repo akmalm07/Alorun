@@ -297,3 +297,19 @@ export const audit_events = pgTable("audit_events", {
   foreignKey({ name: "audit_events_user_fk", columns: [t.user_id], foreignColumns: [users_profile.id] }).onDelete("cascade")
 ]).enableRLS();
 
+
+// Encrypted chat records are separate from the earlier plaintext-oriented chat schema.
+export const encrypted_vaults = pgTable("encrypted_vaults", {
+  user_id: uuid("user_id").notNull().primaryKey(),
+  envelope: jsonb("envelope").notNull(),
+}).enableRLS();
+
+export const encrypted_threads = pgTable("encrypted_threads", {
+  user_id: uuid("user_id").notNull(),
+  id: uuid("id").notNull(),
+  envelope: jsonb("envelope").notNull(),
+  revision: integer("revision").notNull().default(1),
+}, (t) => [
+  primaryKey({ columns: [t.user_id, t.id] }),
+  check("encrypted_threads_revision_check", sql`revision > 0`),
+]).enableRLS();

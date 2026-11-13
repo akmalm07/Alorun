@@ -1,0 +1,11 @@
+**
+!Dockerfile
+!server/
+!server/deploy/
+!server/deploy/package.json
+!server/deploy/package-lock.json
+!server/index.mjs
+!server/encrypted-api.mjs
+!server/supabase-store.mjs
+!server/chat.mjs
+!server/config.mjs

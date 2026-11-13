@@ -8,6 +8,13 @@
       "when": 1794282502073,
       "tag": "0000_wet_moondragon",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794603301352,
+      "tag": "0001_shiny_aaron_stack",
+      "breakpoints": true
     }
   ]
 }

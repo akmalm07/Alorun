@@ -1,0 +1,11 @@
+{
+  "name": "alorun-chat-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "2.119.0",
+    "dotenv": "17.2.3",
+    "zod": "4.6.7"
+  }
+}
