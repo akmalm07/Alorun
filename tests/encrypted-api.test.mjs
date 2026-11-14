@@ -15,7 +15,7 @@ const rng = n => new Uint8Array(randomBytes(n));
 test('authenticated encrypted API isolates accounts, rejects stale writes, and never stores message plaintext', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'alorun-sec-')); const path = join(dir, 'cipher.sqlite');
   const store = createEncryptedStore(path);
-  const server = createServer(createEncryptedHandler({ store, authenticate: async t => ({ tokenA: 'user-a', tokenB: 'user-b' })[t] ?? null, providers: { list: () => [{ provider: 'openai', model: 'test' }], get: (p, m) => p === 'openai' && m === 'test' ? { reply: async () => 'AI response', title: async () => 'Topic' } : null } }));
+  const server = createServer(createEncryptedHandler({ store, authenticate: async t => ({ tokenA: 'user-a', tokenB: 'user-b' })[t] ?? null, providers: { list: () => [{ provider: 'openai', model: 'test' }], get: (p, m) => p === 'openai' && m === 'test' ? { reply: async () => 'AI response', title: async () => 'Topic', branch: async () => ({ branch: true, title: 'Tech jobs' }), findBranch: async () => ({ id: '11111111-1111-4111-8111-111111111111' }) } : null } }));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   async function request(token, path, method = 'GET', body) { const res = await fetch(base + path, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, ...(body ? {body: JSON.stringify(body)} : {}) }); return { status: res.status, json: await res.json() }; }
@@ -41,6 +41,14 @@ test('authenticated encrypted API isolates accounts, rejects stale writes, and n
     assert.deepEqual((await request('tokenA', '/v1/ai/models')).json.models, [{ provider: 'openai', model: 'test' }]);
     const invalid = await request('tokenA', '/v1/ai/reply', 'POST', { messages: [{ role: 'user', content }], title: 'New conversation', titleLocked: false, provider: 'openai', model: 'unapproved' });
     assert.equal(invalid.status, 400);
+    const branchDecision = await request('tokenA', '/v1/ai/branch', 'POST', { messages: [{ role: 'user', content: 'Jobs' }], title: 'Jobs', candidate: 'Tech jobs', provider: 'openai', model: 'test' });
+    assert.deepEqual(branchDecision.json, { branch: true, title: 'Tech jobs' });
+    const searchPayload = { query: 'tech', candidates: [{ id, title: 'Tech jobs' }], provider: 'openai', model: 'test' };
+    const found = await request('tokenA', '/v1/ai/find-branch', 'POST', searchPayload);
+    assert.equal(found.json.id, id);
+    const unknown = await request('tokenA', '/v1/ai/find-branch', 'POST', { ...searchPayload, candidates: [{ id: '22222222-2222-4222-8222-222222222222', title: 'Other' }] });
+    assert.equal(unknown.status, 502);
+    assert.equal((await request('invalid', '/v1/ai/find-branch', 'POST', searchPayload)).status, 401);
     store.close();
     assert.equal(readFileSync(path).includes(Buffer.from(content)), false);
     assert.equal(readFileSync(path).includes(Buffer.from('AI response')), false);
