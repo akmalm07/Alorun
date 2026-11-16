@@ -15,6 +15,13 @@
       "when": 1794603301352,
       "tag": "0001_shiny_aaron_stack",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794870617474,
+      "tag": "0002_conscious_hiroim",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,9 @@
+project_id = "alorun"
+
+[functions.missions]
+# All calls are checked by a separate, constant-time server-only mission secret.
+verify_jwt = false
+
+[edge_runtime]
+# Keep waitUntil work alive when testing with the local Supabase runtime.
+policy = "per_worker"

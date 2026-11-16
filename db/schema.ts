@@ -313,3 +313,55 @@ export const encrypted_threads = pgTable("encrypted_threads", {
   primaryKey({ columns: [t.user_id, t.id] }),
   check("encrypted_threads_revision_check", sql`revision > 0`),
 ]).enableRLS();
+
+// Check-in state contains no audio, transcript, or inferred psychological traits.
+export const goal_checkin_preferences = pgTable('goal_checkin_preferences', {
+  user_id: uuid('user_id').primaryKey().references(() => users_profile.id, { onDelete: 'cascade' }),
+  enabled: boolean('enabled').notNull().default(false),
+}).enableRLS();
+
+export const goal_checkins = pgTable('goal_checkins', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: uuid('user_id').notNull(),
+  goal_id: uuid('goal_id').notNull(),
+  question: text('question').notNull(),
+  status: text('status').notNull().default('pending'),
+  last_prompted_at: timestamp('last_prompted_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex('goal_checkins_user_goal_key').on(t.user_id, t.goal_id),
+  foreignKey({ name: 'goal_checkins_user_fk', columns: [t.user_id], foreignColumns: [users_profile.id] }).onDelete('cascade'),
+  foreignKey({ name: 'goal_checkins_goal_owner_fk', columns: [t.user_id, t.goal_id], foreignColumns: [goals.user_id, goals.id] }).onDelete('cascade'),
+  check('goal_checkins_status_check', sql`${t.status} IN ('pending', 'skipped', 'answered')`),
+]).enableRLS();
+
+// Missions authorize bounded recurring artifact generation, never arbitrary model execution.
+export const missions = pgTable('missions', {
+  id: uuid('id').primaryKey().defaultRandom(), user_id: uuid('user_id').notNull(), goal_id: uuid('goal_id').notNull(),
+  title:text('title').notNull(), instructions:text('instructions').notNull(), kind:text('kind').notNull(),
+  cron:text('cron').notNull(), timezone:text('timezone').notNull(), folder:text('folder').notNull(),
+  status:text('status').notNull().default('paused'), next_run_at:timestamp('next_run_at',{withTimezone:true}),
+  created_at:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(), updated_at:timestamp('updated_at',{withTimezone:true}).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex('missions_owner_id_key').on(t.user_id,t.id), index('missions_due_idx').on(t.status,t.next_run_at),
+  foreignKey({name:'missions_user_fk',columns:[t.user_id],foreignColumns:[users_profile.id]}).onDelete('cascade'),
+  foreignKey({name:'missions_goal_owner_fk',columns:[t.user_id,t.goal_id],foreignColumns:[goals.user_id,goals.id]}).onDelete('cascade'),
+  check('missions_status_check',sql`${t.status} IN ('active','paused')`),
+  check('missions_kind_check',sql`${t.kind} IN ('practice','briefing','review')`),
+  check('missions_folder_check',sql`${t.folder} ~ '^[a-z0-9][a-z0-9-]{0,47}$'`),
+]).enableRLS();
+export const mission_runs = pgTable('mission_runs', {
+  id:uuid('id').primaryKey().defaultRandom(),user_id:uuid('user_id').notNull(),mission_id:uuid('mission_id').notNull(),
+  status:text('status').notNull().default('queued'),scheduled_for:timestamp('scheduled_for',{withTimezone:true}).notNull(),
+  trigger:text('trigger').notNull(),request_id:uuid('request_id').notNull(),claim_token:uuid('claim_token'),
+  started_at:timestamp('started_at',{withTimezone:true}),finished_at:timestamp('finished_at',{withTimezone:true}),
+  summary:text('summary'),error:text('error'),artifact:text('artifact'),
+},(t)=>[
+  uniqueIndex('mission_runs_owner_request_key').on(t.user_id,t.request_id),
+  uniqueIndex('mission_runs_schedule_key').on(t.mission_id,t.trigger,t.scheduled_for),
+  index('mission_runs_status_idx').on(t.status,t.scheduled_for),index('mission_runs_owner_mission_idx').on(t.user_id,t.mission_id),
+  foreignKey({name:'mission_runs_owner_fk',columns:[t.user_id],foreignColumns:[users_profile.id]}).onDelete('cascade'),
+  foreignKey({name:'mission_runs_mission_owner_fk',columns:[t.user_id,t.mission_id],foreignColumns:[missions.user_id,missions.id]}).onDelete('cascade'),
+  check('mission_runs_status_check',sql`${t.status} IN ('queued','running','succeeded','failed','cancelled')`),
+  check('mission_runs_trigger_check',sql`${t.trigger} IN ('cron','manual')`),
+]).enableRLS();

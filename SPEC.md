@@ -456,3 +456,26 @@ Product questions for beta: Is the strongest trigger morning planning, task-star
 - Google Play Billing: https://developer.android.com/google/play/billing
 
 **Specification changes:** For any meaningful departure from these choices, write an ADR and update this file before implementing a divergent architecture.
+
+
+## 20. User-requested slice — goal schedule and voice check-ins (2026-11-14)
+
+The user explicitly brought voice forward from P2. Implement an in-app schedule (no external calendar): share a goal, supply availability, review/edit an AI task proposal, then approve task creation. The main page displays accepted tasks and their calendar slots.
+
+App-open/foreground voice goal questions require opt-in and either (a) an explicitly skipped prior goal check-in or (b) an overdue linked pending task. These triggers are observable product state, not a psychological classification. Cap prompts at one per rolling 24 hours across goals. Answers accept voice only, with explicit record/send, permission handling, dismissal and disable controls. Alorun does not retain audio/transcripts or infer task completion from an answer. See ADR 0003 for data handling and migration details.
+
+## 21. Companion dictation and voice conversation (2026-11-14)
+
+The user requested voice-to-text and a voice conversation that appears in chat when it ends, plus an explanation of the execution layer. Add grounded text Companion chat with Listen/Think/Plan modes, editable dictation, explicit turn-based recorded voice chat with spoken device replies, and End-to-chat transcription of both participants. Speech transcription preserves language; cross-language translation is not implied.
+
+Temporary chat works without retention consent. Separate save_chat_history opt-in permits encrypted transcript storage in existing chat tables; raw audio and graph memory are excluded. Clear history invalidates stale saves. Existing task/calendar approval remains authoritative; broader action-runner architecture is documented as proposed in docs/execution-layer.md. No new calendar provider or autonomous external actions are enabled.
+
+## 22. Missions — approved scheduled serverless artifacts (2026-11-16)
+
+The user requested an autonomous scheduled feature called Missions, scoped bucket-folder access, a friendly frontend and suggestions tied to shared goals. This is explicit authorization to implement a bounded recurring artifact-generation action ahead of the original roadmap; live deployment/paid activation remains separate.
+
+A mission links to an owned active goal and declares instructions, kind (practice/briefing/review), validated five-field cron, confirmed IANA timezone, and a private folder. Creation requires explicit recurring approval. The model receives bounded goal/task context and approved text files and generates a validated Markdown document; it cannot execute arbitrary code/tools or alter tasks/calendar. Suggestions are concrete goal-based templates; execution is AI generated. Users preview schedules, view run state/documents, run manually, and pause/resume.
+
+Existing Supabase Edge Functions spawn on demand from a cron-backed dispatcher; persisted runs deduplicate schedules/worker invocations, coalesce missed ticks, bound fan-out and share cost quotas. Storage is confined to the fixed private mission bucket under owner/mission/folder prefixes, with restrictive client policy and trusted scoped API access. Pause before attempt admission prevents new model use; admitted work may finish but cannot publish after pause. Memory graph/history consent does not implicitly authorize Missions and no graph/chat data is used by them.
+
+See ADR 0005 and docs/missions.md for migration, permissions, deployment, limits, retention gaps and verification. No production cron/service is automatically enabled.
