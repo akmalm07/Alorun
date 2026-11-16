@@ -5,7 +5,20 @@
     "scheme": "alorun",
     "version": "1.0.0",
     "orientation": "portrait",
-    "plugins": ["expo-router"],
-    "android": { "package": "com.alorun.app" }
+    "plugins": [
+      "expo-router",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Alorun to record a voice answer when you tap Record.",
+          "enableBackgroundRecording": false,
+          "enableBackgroundPlayback": false
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "android": {
+      "package": "com.alorun.app"
+    }
   }
 }

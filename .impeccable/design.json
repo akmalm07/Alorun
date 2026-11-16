@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-16T22:40:04.333486+00:00",
+  "title": "Design System: Alorun",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Green accent"
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Screen background"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted text"
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border"
+      },
+      "soft": {
+        "role": "neutral",
+        "displayName": "Soft inset"
+      },
+      "error": {
+        "role": "semantic",
+        "displayName": "Error"
+      },
+      "secondary": {
+        "role": "neutral",
+        "displayName": "Secondary fill"
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "White"
+      }
+    },
+    "extraction": {
+      "platform": "React Native / Expo",
+      "evidence": "Code only. No rendered native screenshots, native UI detector run, device verification, or visual approval.",
+      "sources": [
+        "src/mobile/ui.tsx",
+        "src/mobile/Today.tsx",
+        "src/mobile/PlanBuilder.tsx",
+        "src/mobile/VoiceCheckin.tsx",
+        "src/mobile/Companion.tsx",
+        "src/mobile/useCompanion.ts",
+        "src/mobile/useVoiceCapture.ts",
+        "app/companion.tsx",
+        "src/mobile/Missions.tsx",
+        "app/missions.tsx",
+        "src/shared/missions.ts"
+      ],
+      "units": "React Native logical units; platform default typeface and native font scaling.",
+      "previews": "HTML/CSS omitted: these are native components, not web implementations.",
+      "tonalRamps": "Not defined in inspected code; none synthesized.",
+      "shadowsMotionBreakpoints": "No explicit shadow, elevation, animation, or breakpoint tokens in inspected code."
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Native Pressable. Minimum height 48; pressed and disabled opacity 0.55; accessibility button and disabled state."
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Shared native action for cancel, navigation, task completion, and deferral. Same minimum height and state handling as primary."
+    },
+    {
+      "name": "Labeled Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Visible Text label and native TextInput. Minimum height 48; one-unit outline; label also names the input for accessibility. Native keyboard and multiline behavior."
+    },
+    {
+      "name": "Soft Inset",
+      "kind": "card",
+      "refersTo": "inset",
+      "description": "Inline native View grouping planning, review, or voice content. No shadow or explicit elevation."
+    },
+    {
+      "name": "Calendar Day",
+      "kind": "nav",
+      "refersTo": "calendar-day",
+      "description": "Native Pressable in a horizontal seven-day ScrollView; minimum width 66 and height 96. Selected variant refers to calendar-day-selected; accessibility includes selected state and full date."
+    },
+    {
+      "name": "Task Row",
+      "kind": "custom",
+      "description": "Native stack with one-unit bottom divider, time metadata, task title, optional goal and description, and secondary completion action. Completed titles are struck through."
+    },
+    {
+      "name": "Voice Check-in",
+      "kind": "custom",
+      "refersTo": "inset",
+      "description": "Inline native question and audio disclosure with shared recording actions and a secondary Not now action. Recording text uses a polite live region."
+    },
+    {
+      "name": "Companion Conversation",
+      "kind": "custom",
+      "description": "Native conversation screen reusing shared content, text, buttons, field, rows, sections, and insets. Assistant messages use inset; user messages use section. Selectable message text has speaker and provenance labels. Mode selection uses existing primary and secondary button variants. Dictation remains an editable Message draft; ending turn-based voice chat merges completed entries into the visible transcript."
+    },
+    {
+      "name": "Dictation Conflict Panel",
+      "kind": "custom",
+      "refersTo": "inset",
+      "description": "Inline soft native inset for an oversized combined draft. Heading, explanation, selectable dictated text, primary Replace draft with dictation action, and secondary Keep current draft action reuse the existing visual system. No new visual tokens or web preview."
+    },
+    {
+      "name": "Missions",
+      "kind": "custom",
+      "refersTo": "inset",
+      "description": "Native mission list replaced by form or detail on selection; shared content, dividers, inset, text, fields, buttons and native accent-track switches. Goal suggestions lead to review. Selected goal/type/schedule use primary buttons; presets plus optional five-field cron and timezone require next-three-runs preview before approval. Detail shows private folder input files, run statuses and selectable generated documents. Existing labels cover queued, running, ready, failed and cancelled; shared disabled, error and polite confirmation patterns apply. File copy explains 10 saved inputs, first four read alphabetically, 4,000 characters read per file, and 16,000-character editor limit. No new visual primitives or web preview."
+    }
+  ]
+}

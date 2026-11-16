@@ -12,10 +12,16 @@
     "@sentry/react-native": "8.28.0",
     "@supabase/supabase-js": "2.119.0",
     "@tanstack/react-query": "5.106.1",
+    "cron-parser": "5.10.6",
     "drizzle-orm": "0.45.4",
     "expo": "58.0.23",
+    "expo-audio": "58.0.11",
+    "expo-crypto": "58.0.7",
+    "expo-file-system": "58.0.13",
     "expo-notifications": "58.1.8",
     "expo-router": "58.0.30",
+    "expo-secure-store": "58.0.2",
+    "expo-speech": "58.0.3",
     "graphile-worker": "0.18.0",
     "nativewind": "4.2.7",
     "openai": "7.52.0",
@@ -38,9 +44,11 @@
     "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "drizzle-kit": "0.31.11",
+    "esbuild": "0.28.2",
     "eslint": "10.14.0",
     "prettier": "3.9.10",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2"
   },
   "main": "expo-router/entry",
   "scripts": {
@@ -48,6 +56,13 @@
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "api:build": "tsc -p api/tsconfig.json",
+    "api:start": "node --env-file=.env dist/api/main.js",
+    "test": "pnpm api:build && node --test dist/tests/*.test.js",
+    "format:check": "prettier --check app src api serverless scripts/*.mjs tests/*.ts docs/tasks/*.md docs/adr/0003-goal-schedules-voice.md docs/adr/0004-companion-voice-chat.md docs/adr/0005-missions.md docs/execution-layer.md docs/missions.md",
+    "lint": "eslint app src api serverless tests/*.ts",
+    "missions:build": "tsc -p serverless/tsconfig.json && node scripts/build-missions.mjs",
+    "missions:smoke": "deno run --config supabase/functions/missions/deno.json --allow-env --allow-net=127.0.0.1:55432 --allow-read --allow-sys scripts/test-missions-edge.mjs"
   }
 }

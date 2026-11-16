@@ -9,6 +9,8 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "db/**/*.ts",
-    "drizzle.config.ts"
+    "drizzle.config.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx"
   ]
 }
