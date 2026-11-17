@@ -1,6 +1,7 @@
 # Product Specification — Personal AI Life Companion
 
-**Status:** Build-ready MVP specification (proposed, not implemented)  
+**Status:** Product requirements; implementation is mixed — see [FEATURE_STATUS.md](FEATURE_STATUS.md) before planning work.
+
 **Updated:** 2026-11-06  
 **Platform:** Android-first, cross-platform-capable  
 **Audience:** Students and early-career professionals juggling goals, tasks, and personal growth  

@@ -1,8 +1,13 @@
 # Agent Engineering Playbook — Personal AI Life Companion
 
-**Status:** Instructions for autonomous and human-supervised coding agents  
-**Updated:** 2026-11-06  
-**Source of product truth:** `SPEC.md`  
+**Status:** Instructions for autonomous and human-supervised coding agents
+
+**Updated:** 2026-11-17
+
+**Source of product truth:** `SPEC.md`
+
+**Implementation inventory:** [FEATURE_STATUS.md](FEATURE_STATUS.md) — mandatory preflight and upkeep
+
 **Scope:** Expo Android app, NestJS API, PostgreSQL graph/memory, worker, AI orchestration, QA, deployment
 
 > Agents must build a secure, useful, maintainable product. Optimize for verified outcomes and simple architecture, not the number of files or amount of code generated.
@@ -10,11 +15,12 @@
 ## 1. Instruction priority and operating contract
 
 1. Follow the human's latest explicit instructions and repository policy; never override higher-priority safety/security requirements.
-2. Read `SPEC.md` end-to-end before starting a feature. Treat it as the product scope and acceptance-test contract.
+2. **Read [FEATURE_STATUS.md](FEATURE_STATUS.md) before planning or implementing any feature**, search its IDs and synonyms, and inspect the linked code/tests to establish what already exists. Record the relevant feature IDs and the exact remaining gap in the task log. Then read `SPEC.md` end-to-end as the requirements and acceptance-test contract. Reuse/extend existing implementations; missing credentials, deployment, verification or a bug is not a reason to rebuild a feature.
 3. Inspect the existing codebase, package manifests, tests, API schemas, migrations, and relevant ADRs. **Do not invent nonexistent APIs, dependencies, environment variables, database fields, or credentials.**
 4. For ambiguous implementation details, choose the smallest reversible solution aligned with the spec, document the assumption, and proceed. Escalate genuinely irreversible choices (production data deletion, billing activation, new data processor, privacy-affecting schema change, public deployment) for human approval.
 5. Do not silently expand scope or build speculative infrastructure. MVP P0 before P1 before P2.
-6. At the end of every task, include changes made, verification run and results, remaining gaps, and deployment status; never claim work is done if tests weren't actually run.
+6. Update affected rows in [FEATURE_STATUS.md](FEATURE_STATUS.md) in the same change as implementing, changing, removing, verifying or deploying functionality. Include source/test evidence, actual verification/date/revision, remaining gaps and deployment status. Add newly discovered features; correct stale entries after inspecting code. Distinguish implemented, partial, schema-only and planned work.
+7. At the end of every task, include changes made, verification run and results, remaining gaps, deployment status and updated feature IDs; never claim checks passed or a service is live without evidence.
 
 ## 2. Role model and handoffs
 
@@ -182,9 +188,9 @@ At the end of each completed coding task, agents should respond:
 
 ## 13. Definition of ready / definition of done
 
-**Ready:** Requirement maps to `SPEC.md`; API and state transitions clear; failure states defined; privacy/permission impact assessed; acceptance tests listed; dependencies available.
+**Ready:** Relevant `FEATURE_STATUS.md` rows and linked implementation checked; existing behavior and exact requested gap recorded; requirement maps to `SPEC.md`; API and state transitions clear; failure states defined; privacy/permission impact assessed; acceptance tests listed; dependencies available.
 
-**Done:** Feature implemented end-to-end; typecheck/lint/tests passing; negative cases covered; multi-tenant controls verified; affected docs/migrations updated; UI flows exercised; telemetry/cost considered; reviewer concerns resolved. If unavailable tooling blocks verification, mark the feature *implemented but unverified*, never Done.
+**Done:** `FEATURE_STATUS.md` updated with evidence and remaining gaps; feature implemented end-to-end; typecheck/lint/tests passing; negative cases covered; multi-tenant controls verified; affected docs/migrations updated; UI flows exercised; telemetry/cost considered; reviewer concerns resolved. If unavailable tooling blocks verification, mark the feature *implemented but unverified*, never Done.
 
 ## 14. Architecture decision protocol
 
@@ -201,4 +207,4 @@ Examples requiring ADR: adding Neo4j; swapping NestJS or Supabase; introducing a
 
 ---
 
-**First instruction to any coding agent:** Read `SPEC.md`, then `AGENTS.md`, summarize your immediate build slice and acceptance tests in your task log, inspect the repository, and implement the smallest verified vertical slice. No speculative features, no hidden user-data collection, no unapproved production actions.
+**First instruction to any coding agent:** Read `AGENTS.md` and `FEATURE_STATUS.md` first. Verify whether the requested feature already exists, inspect its linked code/tests, then read `SPEC.md`. Record feature IDs, current behavior, the exact missing slice and acceptance tests in your task log. Extend the existing path and update the tracker with the result. No speculative features, no hidden user-data collection, no unapproved production actions.

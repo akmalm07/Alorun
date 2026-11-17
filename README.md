@@ -2,6 +2,9 @@
 
 An Expo Android app with goal planning, voice Companion chat, encrypted chat branches, and scheduled Missions.
 
+
+Before developing a feature, read [FEATURE_STATUS.md](FEATURE_STATUS.md) for existing implementations, missing work, verification limits and source links. [AGENTS.md](AGENTS.md) requires checking and maintaining this inventory.
+
 ## Run on a Pixel
 
 1. Install Node.js and pnpm 11, then run `pnpm install` in this directory.
