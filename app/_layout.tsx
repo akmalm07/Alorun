@@ -1,10 +1,14 @@
 import "../security/polyfills";
+import { Appearance, StatusBar } from "react-native";
 import { Stack } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
-import { styles } from "../src/mobile/ui";
+import { useEffect, useState } from "react";
+import { colors, styles } from "../src/mobile/ui";
 export default function RootLayout() {
+  useEffect(() => {
+    Appearance.setColorScheme("dark");
+  }, []);
   const [client] = useState(
     () =>
       new QueryClient({
@@ -14,8 +18,14 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.screen}>
+        <StatusBar barStyle="light-content" />
         <QueryClientProvider client={client}>
-          <Stack screenOptions={{ headerShown: false }} />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+            }}
+          />
         </QueryClientProvider>
       </SafeAreaView>
     </SafeAreaProvider>

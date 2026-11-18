@@ -117,12 +117,29 @@ export const chatSaveSchema = z
     messages: z.array(chatMessageSchema).min(1).max(60),
   })
   .strict();
+export const threadMetaSchema = z
+  .object({
+    title: z.string().min(1).max(60),
+    parentId: uuid.nullable().default(null),
+    parentSnapshot: z.array(chatTurnSchema).max(20).default([]),
+    manualPin: z.enum(["pinned", "unpinned"]).nullable().default(null),
+    autoPin: z.boolean().default(false),
+    lastActiveAt: instant.optional(),
+  })
+  .strict();
+export const threadSummarySchema = threadMetaSchema.extend({
+  id: uuid,
+  createdAt: instant,
+});
+export type ThreadMeta = z.infer<typeof threadMetaSchema>;
+export type ThreadSummary = z.infer<typeof threadSummarySchema>;
 export const chatHistorySchema = z.object({
   threadId: uuid.nullable(),
   messages: z.array(chatMessageSchema),
   saveHistory: z.boolean(),
   savingAvailable: z.boolean(),
   historyVersion: instant.nullable(),
+  metadata: threadMetaSchema.optional(),
 });
 export const chatSettingsSchema = z.object({
   saveHistory: z.boolean(),

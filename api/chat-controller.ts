@@ -8,6 +8,8 @@ import {
   Patch,
   Post,
   Req,
+  Param,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -18,6 +20,7 @@ import {
   chatRequestSchema,
   chatSaveSchema,
   uuid,
+  threadMetaSchema,
 } from "../src/shared/contracts";
 import { AuthGuard, type AuthRequest } from "./auth";
 import { ChatService } from "./chat-service";
@@ -36,11 +39,36 @@ export class ChatController {
   @Post("reply") reply(@Req() req: AuthRequest, @Body() body: unknown) {
     return this.service.reply(req.userId, parse(chatRequestSchema, body));
   }
-  @Get("history") history(@Req() req: AuthRequest) {
-    return this.service.history(req.userId);
+  @Get("threads") threads(@Req() req: AuthRequest) {
+    return this.service.threads(req.userId);
+  }
+  @Patch("threads/:id/pin") pin(
+    @Req() req: AuthRequest,
+    @Param("id") id: string,
+    @Body() body: unknown,
+  ) {
+    const input = parse(
+      z
+        .object({ manualPin: z.enum(["pinned", "unpinned"]).nullable() })
+        .strict(),
+      body,
+    );
+    return this.service.pin(req.userId, parse(uuid, id), input.manualPin);
+  }
+  @Get("history") history(
+    @Req() req: AuthRequest,
+    @Query("threadId") id?: string,
+  ) {
+    return this.service.history(req.userId, id ? parse(uuid, id) : undefined);
   }
   @Post("history") save(@Req() req: AuthRequest, @Body() body: unknown) {
-    return this.service.save(req.userId, parse(chatSaveSchema, body));
+    return this.service.save(
+      req.userId,
+      parse(
+        chatSaveSchema.extend({ metadata: threadMetaSchema.optional() }),
+        body,
+      ),
+    );
   }
   @Patch("settings") settings(@Req() req: AuthRequest, @Body() body: unknown) {
     return this.service.settings(

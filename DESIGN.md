@@ -2,15 +2,18 @@
 name: Alorun
 description: Existing Expo native visual system for goals, plans, calendar tasks, and voice check-ins.
 colors:
-  background: "#f7f8fc"
-  ink: "#252a40"
-  muted: "#5c637b"
-  accent: "#354f43"
-  border: "#d4d9e1"
-  soft: "#e9efe9"
-  error: "#9c3030"
-  secondary: "#e4e8ef"
+  background: "#202422"
+  ink: "#f4f6f4"
+  muted: "#b1b9b3"
+  accent: "#8cdbad"
+  border: "#3b433e"
+  soft: "#2a302c"
+  error: "#ffaaaa"
+  secondary: "#303733"
   white: "#fff"
+  on-accent: "#10261a"
+  sidebar: "#191e1b"
+  accent-soft: "#2d4538"
 typography:
   title:
     fontSize: "32"
@@ -55,7 +58,7 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.accent}"
-    textColor: "{colors.white}"
+    textColor: "{colors.on-accent}"
     typography: "{typography.button}"
     rounded: "{rounded.button}"
     padding: "12 18"
@@ -66,7 +69,7 @@ components:
     rounded: "{rounded.button}"
     padding: "12 18"
   input:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.soft}"
     textColor: "{colors.ink}"
     rounded: "{rounded.input}"
     padding: "{spacing.control-padding}"
@@ -81,7 +84,7 @@ components:
     padding: "{spacing.control-padding}"
   calendar-day-selected:
     backgroundColor: "{colors.accent}"
-    textColor: "{colors.white}"
+    textColor: "{colors.on-accent}"
     rounded: "{rounded.button}"
     padding: "{spacing.control-padding}"
 ---
@@ -90,7 +93,7 @@ components:
 
 ## Overview
 
-This is a code-derived record of the existing React Native / Expo interface. It preserves the native typeface, pale background, dark ink, muted supporting text, and green actions already implemented. It introduces no creative direction or replacement identity.
+This is a code-derived record of the existing React Native / Expo interface. It uses the native typeface, charcoal-gray background, light text, muted supporting text and mint-green primary actions. The user requested the black theme and familiar chat/sidebar layout on 2026-11-17.
 
 Extraction sources: `src/mobile/ui.tsx`, `Today.tsx`, `PlanBuilder.tsx`, `VoiceCheckin.tsx`, `Companion.tsx`, `useCompanion.ts`, `useVoiceCapture.ts`, `app/companion.tsx`, `Missions.tsx`, `app/missions.tsx` (screen routes), and `src/shared/missions.ts` (mission labels and input limits). No rendered native screenshots were available; this document does not imply visual approval or device verification. No native UI detector was run. Token dimensions are React Native logical units, not CSS pixels; font sizes follow native text scaling. No explicit font family is configured in these sources, so use the platform default.
 
@@ -189,3 +192,13 @@ Run labels are “Queued”, “Preparing document”, “Document ready”, “
 ### Feedback
 
 Errors are native `Text` with alert semantics and the error color. Loading uses a native `ActivityIndicator`. Pending operations communicate through action labels and disabled states; no extra animation system was extracted.
+
+
+## Conversation sidebar update — 2026-11-17
+
+Companion now uses a fixed header, selectable conversation modes, scrolling transcript and anchored rounded composer with Branch, Voice and Send/Stop controls. User messages sit in dark neutral bubbles; assistant responses use the open black transcript. A 280-unit left sidebar is persistent from 800 units wide; phones use a dismissible left drawer. Sidebar separates pinned/recent chats, marks manual and automatic pins and explains manual precedence. Settings chat uses the same transcript/composer and prominently discloses its local catalogue, relevant controls and explicit changes. Black Today/chat/sidebar/settings were inspected in Pixel 8 Expo Go; wide-screen and full accessibility acceptance remain unverified.
+
+
+## Shared navigation and charcoal revision — 2026-11-17
+
+The latest user request replaces pure black with charcoal (`background`) and green primary/selected accents. `Sidebar.tsx` is shared by Companion and `MainNavigation.tsx`; Today/Your goals and Missions have a fixed Menu header and the same destinations and saved-chat list. The header remains accessible while the body scrolls. Today groups chat/Missions actions in a wrapping row and separates each goal using a raised charcoal surface. Sidebar marks the active destination with green-tinted fill and text. Companion uses the same surfaces and controls. Pixel 8 emulator checks cover Today, its open drawer and saved-chat entry; full tablet/large-text/screen-reader QA remains pending.

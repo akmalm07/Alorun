@@ -480,3 +480,16 @@ A mission links to an owned active goal and declares instructions, kind (practic
 Existing Supabase Edge Functions spawn on demand from a cron-backed dispatcher; persisted runs deduplicate schedules/worker invocations, coalesce missed ticks, bound fan-out and share cost quotas. Storage is confined to the fixed private mission bucket under owner/mission/folder prefixes, with restrictive client policy and trusted scoped API access. Pause before attempt admission prevents new model use; admitted work may finish but cannot publish after pause. Memory graph/history consent does not implicitly authorize Missions and no graph/chat data is used by them.
 
 See ADR 0005 and docs/missions.md for migration, permissions, deployment, limits, retention gaps and verification. No production cron/service is automatically enabled.
+
+## 23. Black theme, conversation sidebar and settings chat (2026-11-17)
+
+User requested a black app theme and familiar conversation layout: transcript, bottom composer with visible Branch action, recent conversations and pinned conversations in a left sidebar (drawer on phones), Missions and Settings entries. Extend existing Companion history and the existing fixed-parent branch semantics; the user-held encrypted vault remains a separate account/key flow.
+
+Recent conversations, branch context and pin choices persist only with chat-history consent and existing backend encryption. Temporary chats stay in the mounted Companion session. Automatic importance is a transparent rule: goal-linked planning replies can pin a chat; explicit manual pin or unpin always wins. No psychological profiling or new classifier/model calls for importance.
+
+Settings is a dedicated guided conversation over the actual implemented settings catalogue. It prominently explains its role, selects relevant settings from the prompt, and exposes real controls. This first version is deterministic/local; it cannot invent settings or change them from prose. Changes require tapping the relevant control. Unsupported requests show available topics. Account deletion/export and unavailable integrations must be described honestly.
+
+
+### Theme/navigation revision — 2026-11-17
+
+The user changed the visual brief from black to charcoal gray with green accents and requested the sidebar menu on Today/Your goals. Use the same reusable sidebar destinations and saved-chat lists throughout Today, Missions and Companion; keep Menu fixed while content scrolls. Preserve consent and user pin precedence.

@@ -5,6 +5,9 @@
     "scheme": "alorun",
     "version": "1.0.0",
     "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#202422",
+    "splash": { "backgroundColor": "#202422" },
     "plugins": [
       "expo-router",
       [

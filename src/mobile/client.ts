@@ -7,7 +7,26 @@ import { todaySchema } from "../shared/contracts";
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-export const configured = Boolean(supabaseUrl && supabaseKey && apiUrl);
+function isProjectUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      (url.protocol === "https:" || url.protocol === "http:") &&
+      url.pathname === "/" &&
+      !url.search &&
+      !url.hash
+    );
+  } catch {
+    return false;
+  }
+}
+export const configurationError =
+  supabaseUrl && !isProjectUrl(supabaseUrl)
+    ? "The Supabase URL must be the project root URL, without /rest/v1 or another path. Check the app setup and restart Expo."
+    : null;
+export const configured = Boolean(
+  supabaseUrl && supabaseKey && !configurationError,
+);
 export const supabase = configured
   ? createClient(supabaseUrl!, supabaseKey!, {
       auth: {

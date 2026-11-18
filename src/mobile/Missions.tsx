@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -22,6 +22,7 @@ import {
 } from "../shared/missions";
 import { api, newId } from "./client";
 import { useSession } from "./auth";
+import { MainNavigation } from "./MainNavigation";
 import { Button, colors, ErrorMessage, Field, styles } from "./ui";
 
 const textFileSchema = z.object({ name: z.string(), content: z.string() });
@@ -619,177 +620,173 @@ function MissionsScreen({ userId }: { userId: string }) {
       (s) => !goalFilter || s.goalId === goalFilter,
     ) ?? [];
   return (
-    <ScrollView
-      key={form?.key ?? selected ?? "mission-list"}
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl
-          refreshing={page.isRefetching || goals.isRefetching}
-          onRefresh={() => {
-            void page.refetch();
-            void goals.refetch();
-          }}
-        />
-      }
-    >
-      <Button
-        title="Back to Today"
-        secondary
-        onPress={() => router.replace("/")}
-      />
-      <Text style={styles.title}>Missions</Text>
-      <Text style={styles.body}>
-        Give a goal a little ongoing support. A mission prepares a useful
-        document on a schedule you choose.
-      </Text>
-      {(page.isLoading || goals.isLoading) && (
-        <ActivityIndicator accessibilityLabel="Loading missions and goals" />
-      )}
-      <ErrorMessage error={page.error || goals.error} />
-      {(page.isError || goals.isError) && (
-        <Button
-          title="Retry loading"
-          secondary
-          onPress={() => {
-            void page.refetch();
-            void goals.refetch();
-          }}
-        />
-      )}
-      {page.data && goals.data && (
-        <>
-          {!page.data.runnerAvailable && (
-            <Text style={styles.muted}>
-              Mission runner unavailable. You can prepare and save paused
-              missions now.
-            </Text>
-          )}
-          {selected ? (
-            <MissionDetail
-              key={selected}
-              id={selected}
-              userId={userId}
-              runnerAvailable={page.data.runnerAvailable}
-              onClose={() => setSelected(null)}
-            />
-          ) : form ? (
-            <MissionForm
-              key={form.key}
-              userId={userId}
-              goals={goals.data}
-              suggestion={form.suggestion}
-              initialGoalId={
-                goals.data.find((g) => g.id === goalFilter)?.id ?? ""
-              }
-              runnerAvailable={page.data.runnerAvailable}
-              onClose={() => setForm(null)}
-              onSaved={(id) => {
-                setForm(null);
-                setSelected(id);
-                void query.invalidateQueries({
-                  queryKey: ["missions", userId],
-                });
-              }}
-            />
-          ) : (
-            <>
-              {!goals.data.length ? (
-                <Text style={styles.body}>
-                  Share a goal on Today to get mission suggestions that fit what
-                  matters to you.
-                </Text>
-              ) : (
-                <>
-                  <View style={styles.section}>
-                    <Text style={styles.heading}>
-                      {goalFilter
-                        ? "Ideas for this goal"
-                        : "Suggested from your goals"}
-                    </Text>
-                    {!suggestions.length && (
-                      <Text style={styles.muted}>
-                        No suggestions for this goal yet. You can create your
-                        own mission below.
-                      </Text>
-                    )}
-                    {suggestions.map((suggestion, index) => (
-                      <View
-                        key={`${suggestion.goalId}-${index}`}
-                        style={styles.section}
-                      >
-                        <Text style={styles.label}>
-                          {goals.data.find((g) => g.id === suggestion.goalId)
-                            ?.title ?? "Your goal"}
-                        </Text>
-                        <Text style={[styles.body, { fontWeight: "600" }]}>
-                          {suggestion.title}
-                        </Text>
-                        <Text style={styles.muted}>{suggestion.reason}</Text>
-                        <Text style={styles.body}>
-                          {suggestion.instructions}
-                        </Text>
-                        <Button
-                          title="Use this suggestion"
-                          secondary
-                          onPress={() => {
-                            setSelected(null);
-                            setForm({ suggestion, key: newId() });
-                          }}
-                        />
-                      </View>
-                    ))}
-                    <Button
-                      title="Create your own mission"
-                      secondary
-                      onPress={() => {
-                        setSelected(null);
-                        setForm({ suggestion: null, key: newId() });
-                      }}
-                    />
-                  </View>
-                </>
-              )}
-              <View style={styles.section}>
-                <Text style={styles.heading}>Your missions</Text>
-                {!page.data.missions.length && (
-                  <Text style={styles.muted}>
-                    Your approved missions will appear here. Every mission
-                    starts with your review.
+    <MainNavigation title="Missions" active="missions">
+      <ScrollView
+        key={form?.key ?? selected ?? "mission-list"}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={page.isRefetching || goals.isRefetching}
+            onRefresh={() => {
+              void page.refetch();
+              void goals.refetch();
+            }}
+          />
+        }
+      >
+        <Text style={styles.body}>
+          Give a goal a little ongoing support. A mission prepares a useful
+          document on a schedule you choose.
+        </Text>
+        {(page.isLoading || goals.isLoading) && (
+          <ActivityIndicator accessibilityLabel="Loading missions and goals" />
+        )}
+        <ErrorMessage error={page.error || goals.error} />
+        {(page.isError || goals.isError) && (
+          <Button
+            title="Retry loading"
+            secondary
+            onPress={() => {
+              void page.refetch();
+              void goals.refetch();
+            }}
+          />
+        )}
+        {page.data && goals.data && (
+          <>
+            {!page.data.runnerAvailable && (
+              <Text style={styles.muted}>
+                Mission runner unavailable. You can prepare and save paused
+                missions now.
+              </Text>
+            )}
+            {selected ? (
+              <MissionDetail
+                key={selected}
+                id={selected}
+                userId={userId}
+                runnerAvailable={page.data.runnerAvailable}
+                onClose={() => setSelected(null)}
+              />
+            ) : form ? (
+              <MissionForm
+                key={form.key}
+                userId={userId}
+                goals={goals.data}
+                suggestion={form.suggestion}
+                initialGoalId={
+                  goals.data.find((g) => g.id === goalFilter)?.id ?? ""
+                }
+                runnerAvailable={page.data.runnerAvailable}
+                onClose={() => setForm(null)}
+                onSaved={(id) => {
+                  setForm(null);
+                  setSelected(id);
+                  void query.invalidateQueries({
+                    queryKey: ["missions", userId],
+                  });
+                }}
+              />
+            ) : (
+              <>
+                {!goals.data.length ? (
+                  <Text style={styles.body}>
+                    Share a goal on Today to get mission suggestions that fit
+                    what matters to you.
                   </Text>
-                )}
-                {page.data.missions.map((mission) => (
-                  <View key={mission.id} style={styles.section}>
-                    <Text style={[styles.body, { fontWeight: "600" }]}>
-                      {mission.title}
-                    </Text>
-                    <Text style={styles.muted}>
-                      {mission.status === "active" ? "Active" : "Paused"} ·{" "}
-                      {goals.data.find((g) => g.id === mission.goalId)?.title ??
-                        "Goal"}
-                    </Text>
-                    {mission.nextRunAt && (
-                      <Text style={styles.muted}>
-                        Next: {dateLabel(mission.nextRunAt, mission.timezone)} ·{" "}
-                        {mission.timezone}
+                ) : (
+                  <>
+                    <View style={styles.section}>
+                      <Text style={styles.heading}>
+                        {goalFilter
+                          ? "Ideas for this goal"
+                          : "Suggested from your goals"}
                       </Text>
-                    )}
-                    <Button
-                      title="Open mission"
-                      secondary
-                      onPress={() => {
-                        setForm(null);
-                        setSelected(mission.id);
-                      }}
-                    />
-                  </View>
-                ))}
-              </View>
-            </>
-          )}
-        </>
-      )}
-    </ScrollView>
+                      {!suggestions.length && (
+                        <Text style={styles.muted}>
+                          No suggestions for this goal yet. You can create your
+                          own mission below.
+                        </Text>
+                      )}
+                      {suggestions.map((suggestion, index) => (
+                        <View
+                          key={`${suggestion.goalId}-${index}`}
+                          style={styles.section}
+                        >
+                          <Text style={styles.label}>
+                            {goals.data.find((g) => g.id === suggestion.goalId)
+                              ?.title ?? "Your goal"}
+                          </Text>
+                          <Text style={[styles.body, { fontWeight: "600" }]}>
+                            {suggestion.title}
+                          </Text>
+                          <Text style={styles.muted}>{suggestion.reason}</Text>
+                          <Text style={styles.body}>
+                            {suggestion.instructions}
+                          </Text>
+                          <Button
+                            title="Use this suggestion"
+                            secondary
+                            onPress={() => {
+                              setSelected(null);
+                              setForm({ suggestion, key: newId() });
+                            }}
+                          />
+                        </View>
+                      ))}
+                      <Button
+                        title="Create your own mission"
+                        secondary
+                        onPress={() => {
+                          setSelected(null);
+                          setForm({ suggestion: null, key: newId() });
+                        }}
+                      />
+                    </View>
+                  </>
+                )}
+                <View style={styles.section}>
+                  <Text style={styles.heading}>Your missions</Text>
+                  {!page.data.missions.length && (
+                    <Text style={styles.muted}>
+                      Your approved missions will appear here. Every mission
+                      starts with your review.
+                    </Text>
+                  )}
+                  {page.data.missions.map((mission) => (
+                    <View key={mission.id} style={styles.section}>
+                      <Text style={[styles.body, { fontWeight: "600" }]}>
+                        {mission.title}
+                      </Text>
+                      <Text style={styles.muted}>
+                        {mission.status === "active" ? "Active" : "Paused"} ·{" "}
+                        {goals.data.find((g) => g.id === mission.goalId)
+                          ?.title ?? "Goal"}
+                      </Text>
+                      {mission.nextRunAt && (
+                        <Text style={styles.muted}>
+                          Next: {dateLabel(mission.nextRunAt, mission.timezone)}{" "}
+                          · {mission.timezone}
+                        </Text>
+                      )}
+                      <Button
+                        title="Open mission"
+                        secondary
+                        onPress={() => {
+                          setForm(null);
+                          setSelected(mission.id);
+                        }}
+                      />
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+          </>
+        )}
+      </ScrollView>
+    </MainNavigation>
   );
 }
 export default function Missions() {

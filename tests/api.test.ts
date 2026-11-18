@@ -1,3 +1,4 @@
+import { threadMetaSchema } from "../src/shared/contracts";
 import "reflect-metadata";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -770,6 +771,106 @@ test(
                 .where(eq(tables.chat_messages.user_id, userA))
             ).length,
             72,
+          );
+        },
+      );
+      await t.test(
+        "thread metadata is encrypted, tenant-isolated, and manual pins survive new turns",
+        async () => {
+          const id = randomUUID();
+          const first: ChatMessage = {
+            id: randomUUID(),
+            role: "user",
+            content: "Private topic title",
+            source: "text",
+            suggestedGoalId: null,
+          };
+          const version = (await chat.history(userA)).historyVersion!;
+          await chat.save(userA, {
+            threadId: id,
+            historyVersion: version,
+            messages: [first],
+            metadata: threadMetaSchema.parse({ title: "Private topic title" }),
+          });
+          const [row] = await db
+            .select()
+            .from(tables.chat_threads)
+            .where(eq(tables.chat_threads.id, id));
+          assert.ok(row.title?.startsWith("protected:"));
+          assert.ok(!row.title?.includes("Private topic title"));
+          await assert.rejects(chat.pin(userB, id, "pinned"), /not found/);
+          assert.equal(
+            (await chat.threads(userB)).threads.some((t) => t.id === id),
+            false,
+          );
+          assert.equal((await chat.history(userB, id)).messages.length, 0);
+          await chat.pin(userA, id, "unpinned");
+          const reply: ChatMessage = {
+            id: randomUUID(),
+            role: "assistant",
+            content: "Review your goal",
+            source: "text",
+            suggestedGoalId: goal.id,
+          };
+          await chat.save(userA, {
+            threadId: id,
+            historyVersion: version,
+            messages: [reply],
+          });
+          const meta = (await chat.threads(userA)).threads.find(
+            (t) => t.id === id,
+          )!;
+          assert.equal(meta.manualPin, "unpinned");
+          assert.equal(meta.autoPin, true);
+          const branchId = randomUUID();
+          const snapshot = [{ role: first.role, content: first.content }];
+          await chat.save(userA, {
+            threadId: branchId,
+            historyVersion: version,
+            messages: [
+              { ...first, id: randomUUID(), content: "Branch direction" },
+            ],
+            metadata: threadMetaSchema.parse({
+              title: "Branch",
+              parentId: id,
+              parentSnapshot: snapshot,
+            }),
+          });
+          assert.deepEqual(
+            (
+              (await chat.history(userA, branchId)) as {
+                metadata?: { parentSnapshot: unknown };
+              }
+            ).metadata?.parentSnapshot,
+            snapshot,
+          );
+          await chat.settings(userB, true);
+          await assert.rejects(
+            chat.save(userB, {
+              threadId: randomUUID(),
+              historyVersion: (await chat.history(userB)).historyVersion!,
+              messages: [{ ...first, id: randomUUID() }],
+              metadata: threadMetaSchema.parse({
+                title: "Forged branch",
+                parentId: id,
+                parentSnapshot: snapshot,
+              }),
+            }),
+          );
+          await assert.rejects(
+            chat.save(userA, {
+              threadId: randomUUID(),
+              historyVersion: version,
+              messages: [{ ...first, id: randomUUID() }],
+              metadata: threadMetaSchema.parse({
+                title: "Forged context",
+                parentId: id,
+                parentSnapshot: [
+                  { role: "assistant", content: "not in parent" },
+                ],
+              }),
+            }),
+            /snapshot/,
           );
         },
       );

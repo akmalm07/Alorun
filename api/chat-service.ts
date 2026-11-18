@@ -12,6 +12,8 @@ import {
   type ChatMode,
   type ChatTurn,
   type ChatSave,
+  threadMetaSchema,
+  type ThreadMeta,
 } from "../src/shared/contracts";
 import { recentConversation } from "../src/domain/conversation";
 import type { Database } from "./database";
@@ -98,7 +100,87 @@ export class ChatService {
       );
     return { text: text.trim().slice(0, 4000) };
   }
-  async history(userId: string) {
+  private metadata(
+    title: string | null,
+    owner: string,
+    id: string,
+  ): ThreadMeta {
+    if (!title?.startsWith("protected:"))
+      return threadMetaSchema.parse({ title: title || "Conversation" });
+    if (!this.encryption)
+      throw new ServiceUnavailableException("Saved chat is unavailable.");
+    return threadMetaSchema.parse(
+      JSON.parse(this.encryption.open(title.slice(10), owner, id, id)),
+    );
+  }
+  private protect(meta: ThreadMeta, owner: string, id: string) {
+    if (!this.encryption)
+      throw new ServiceUnavailableException("Saved chat is unavailable.");
+    return (
+      "protected:" + this.encryption.seal(JSON.stringify(meta), owner, id, id)
+    );
+  }
+  async threads(userId: string) {
+    return this.db.transaction(async (tx) => {
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtext(${`chat:${userId}`}))`,
+      );
+      const [prefs] = await tx
+        .select()
+        .from(tables.privacy_settings)
+        .where(eq(tables.privacy_settings.user_id, userId));
+      if (!prefs?.save_chat_history || !this.encryption) return { threads: [] };
+      const rows = await tx
+        .select()
+        .from(tables.chat_threads)
+        .where(eq(tables.chat_threads.user_id, userId))
+        .orderBy(desc(tables.chat_threads.created_at))
+        .limit(100);
+      return {
+        threads: rows
+          .map((row) => ({
+            id: row.id,
+            createdAt: row.created_at.toISOString(),
+            ...this.metadata(row.title, userId, row.id),
+            parentSnapshot: [],
+          }))
+          .sort(
+            (a, b) =>
+              Date.parse(b.lastActiveAt ?? b.createdAt) -
+              Date.parse(a.lastActiveAt ?? a.createdAt),
+          ),
+      };
+    });
+  }
+  async pin(userId: string, id: string, manualPin: ThreadMeta["manualPin"]) {
+    return this.db.transaction(async (tx) => {
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtext(${`chat:${userId}`}))`,
+      );
+      const [row] = await tx
+        .select()
+        .from(tables.chat_threads)
+        .where(
+          and(
+            eq(tables.chat_threads.user_id, userId),
+            eq(tables.chat_threads.id, id),
+          ),
+        );
+      if (!row) throw new NotFoundException("Conversation not found");
+      const meta = { ...this.metadata(row.title, userId, id), manualPin };
+      await tx
+        .update(tables.chat_threads)
+        .set({ title: this.protect(meta, userId, id) })
+        .where(
+          and(
+            eq(tables.chat_threads.user_id, userId),
+            eq(tables.chat_threads.id, id),
+          ),
+        );
+      return meta;
+    });
+  }
+  async history(userId: string, threadId?: string) {
     return this.db.transaction(async (tx) => {
       await tx.execute(
         sql`SELECT pg_advisory_xact_lock(hashtext(${`chat:${userId}`}))`,
@@ -117,7 +199,12 @@ export class ChatService {
       const [thread] = await tx
         .select()
         .from(tables.chat_threads)
-        .where(eq(tables.chat_threads.user_id, userId))
+        .where(
+          and(
+            eq(tables.chat_threads.user_id, userId),
+            threadId ? eq(tables.chat_threads.id, threadId) : undefined,
+          ),
+        )
         .orderBy(desc(tables.chat_threads.created_at))
         .limit(1);
       if (!thread) return { ...base, threadId: null, messages: [] };
@@ -150,7 +237,12 @@ export class ChatService {
               ),
             ),
           );
-        return { ...base, threadId: thread.id, messages };
+        return {
+          ...base,
+          threadId: thread.id,
+          messages,
+          metadata: this.metadata(thread.title, userId, thread.id),
+        };
       } catch {
         throw new ServiceUnavailableException(
           "Saved chat is temporarily unavailable. Your goals and tasks remain available; contact support if retrying does not help.",
@@ -184,7 +276,7 @@ export class ChatService {
       };
     });
   }
-  async save(userId: string, input: ChatSave) {
+  async save(userId: string, input: ChatSave & { metadata?: ThreadMeta }) {
     if (new Set(input.messages.map((m) => m.id)).size !== input.messages.length)
       throw new BadRequestException("Duplicate message IDs");
     return this.db.transaction(async (tx) => {
@@ -214,10 +306,89 @@ export class ChatService {
             eq(tables.chat_threads.user_id, userId),
           ),
         );
+      if (!thread && input.metadata?.parentId) {
+        const [parent] = await tx
+          .select({ id: tables.chat_threads.id })
+          .from(tables.chat_threads)
+          .where(
+            and(
+              eq(tables.chat_threads.user_id, userId),
+              eq(tables.chat_threads.id, input.metadata.parentId),
+            ),
+          );
+        if (!parent || parent.id === input.threadId)
+          throw new NotFoundException("Parent conversation not found");
+        const rows = await tx
+          .select()
+          .from(tables.chat_messages)
+          .where(
+            and(
+              eq(tables.chat_messages.user_id, userId),
+              eq(tables.chat_messages.thread_id, parent.id),
+            ),
+          )
+          .orderBy(
+            desc(tables.chat_messages.created_at),
+            desc(tables.chat_messages.id),
+          )
+          .limit(60);
+        const own = rows
+          .reverse()
+          .map((row) =>
+            chatMessageSchema.parse(
+              JSON.parse(
+                this.encryption!.open(
+                  row.content_protected,
+                  userId,
+                  parent.id,
+                  row.id,
+                ),
+              ),
+            ),
+          );
+        const snapshot = input.metadata.parentSnapshot;
+        const valid =
+          snapshot.length > 0 &&
+          own.some(
+            (_, start) =>
+              JSON.stringify(
+                own
+                  .slice(start, start + snapshot.length)
+                  .map((m) => ({ role: m.role, content: m.content })),
+              ) === JSON.stringify(snapshot),
+          );
+        if (!valid)
+          throw new BadRequestException(
+            "Branch snapshot must match its saved parent’s own messages.",
+          );
+      }
+      if (
+        !thread &&
+        input.metadata &&
+        !input.metadata.parentId &&
+        input.metadata.parentSnapshot.length
+      )
+        throw new BadRequestException(
+          "Root conversations cannot include branch context.",
+        );
       if (!thread) {
         const created = await tx
           .insert(tables.chat_threads)
-          .values({ id: input.threadId, user_id: userId, title: "Companion" })
+          .values({
+            id: input.threadId,
+            user_id: userId,
+            title: this.protect(
+              input.metadata ??
+                threadMetaSchema.parse({
+                  title:
+                    input.messages
+                      .find((m) => m.role === "user")
+                      ?.content.slice(0, 60) || "Conversation",
+                }),
+              userId,
+              input.threadId,
+            ),
+          })
           .onConflictDoNothing()
           .returning();
         if (!created.length)
@@ -303,6 +474,49 @@ export class ChatService {
         if (inserted.length !== fresh.length)
           throw new ConflictException("Message IDs are already in use");
       }
+      const meta = thread
+        ? this.metadata(thread.title, userId, thread.id)
+        : (input.metadata ??
+          threadMetaSchema.parse({
+            title:
+              input.messages
+                .find((m) => m.role === "user")
+                ?.content.slice(0, 60) || "Conversation",
+          }));
+      if (!thread) meta.autoPin = false;
+      const linkedGoals = await tx
+        .select({ id: tables.goals.id })
+        .from(tables.goals)
+        .where(eq(tables.goals.user_id, userId));
+      // Automatic importance is transparent goal linkage; manual pin/unpin always wins.
+      const autoPin =
+        meta.autoPin ||
+        input.messages.some(
+          (m) =>
+            m.role === "assistant" &&
+            linkedGoals.some((g) => g.id === m.suggestedGoalId),
+        );
+      await tx
+        .update(tables.chat_threads)
+        .set({
+          title: this.protect(
+            {
+              ...meta,
+              autoPin,
+              lastActiveAt: fresh.length
+                ? new Date().toISOString()
+                : meta.lastActiveAt,
+            },
+            userId,
+            input.threadId,
+          ),
+        })
+        .where(
+          and(
+            eq(tables.chat_threads.user_id, userId),
+            eq(tables.chat_threads.id, input.threadId),
+          ),
+        );
       return { saved: true };
     });
   }

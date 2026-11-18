@@ -1,4 +1,5 @@
 node_modules/
+.local/
 .expo/
 .env
 .env.*
@@ -15,3 +16,5 @@ tfplan
 *.tfplan
 dist/
 supabase/functions/missions/worker.js
+
+supabase/.temp/

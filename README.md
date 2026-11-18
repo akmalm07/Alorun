@@ -42,6 +42,8 @@ This is a development implementation, **not ready for production**. It requires 
 2. Configure Cloud Run using [the Terraform deployment guide](infra/terraform/README.md). The server verifies each Supabase access token, and uses that same token to access Supabase PostgreSQL through its REST API so row-level policies apply. Set only the Supabase publishable/anon key, never the service-role key.
 3. Set `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, and the HTTPS Cloud Run URL as `EXPO_PUBLIC_CHAT_API_URL`, then start Expo. Sign in and create a separate encryption passphrase. On another device, sign into the same account and enter that passphrase. The app requires sign-in and unlock again after restart or session expiry. For local server testing, set the server environment variables in `.env.example` and run `CHAT_HOST=127.0.0.1 pnpm chat:server`; the mobile client requires an HTTPS endpoint.
 
+For `EXPO_PUBLIC_SUPABASE_URL`, use the Supabase project root (for example, `https://PROJECT.supabase.co`), without `/rest/v1` or `/auth/v1`. Restart Expo after changing public environment variables.
+
 The previous plaintext `chat-dev.sqlite` is not used by the new chat API and is never automatically deleted or assigned to an account. To import it, first create and unlock a vault in the app. On the trusted computer holding the old SQLite file, export `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and HTTPS `CHAT_API_URL`, then run the following in an interactive terminal. Passwords are entered without terminal echo and passed to the import process over stdin, not command-line arguments:
 
 ```sh
@@ -68,6 +70,8 @@ Select a chat and choose **+ Branch** to create a nested conversation. The orang
 
 
 ## Goal planning, voice companion and Missions
+
+Companion uses a black chat layout with an anchored composer. **Branch** starts a separate conversation with a fixed snapshot of its direct parent's recent messages. Open **Menu** for recent/pinned conversations, Today, Missions and **Settings chat**. Settings chat is a disclosed local guide: ask about history, check-ins, appearance, pins, Missions or your account to see relevant controls. A prompt alone never changes a setting. History saving is opt-in; chats and pins persist only when saving is enabled and backend encryption is configured. Goal-linked planning chats may auto-pin, but your explicit pin or unpin takes precedence. The user-held encrypted chat/vault remains a separate flow.
 
 ## Goal planning and voice check-ins
 

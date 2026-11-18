@@ -1,5 +1,6 @@
 import {
   Pressable,
+  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -7,14 +8,35 @@ import {
   type TextInputProps,
 } from "react-native";
 export const colors = {
-  background: "#f7f8fc",
-  ink: "#252a40",
-  muted: "#5c637b",
-  accent: "#354f43",
-  border: "#d4d9e1",
-  soft: "#e9efe9",
-  error: "#9c3030",
+  background: "#202422",
+  ink: "#f4f6f4",
+  muted: "#b1b9b3",
+  accent: "#8cdbad",
+  border: "#3b433e",
+  soft: "#2a302c",
+  error: "#ffaaaa",
+  sidebar: "#191e1b",
+  secondary: "#303733",
+  accentSoft: "#2d4538",
+  onAccent: "#10261a",
 };
+export function Brand() {
+  return (
+    <Image
+      // Metro bundles local assets through static require.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      source={require("../../assets/alorun_full_logo.png")}
+      accessibilityLabel="Alorun"
+      resizeMode="contain"
+      style={{
+        width: 104,
+        height: 70,
+        alignSelf: "flex-start",
+        borderRadius: 12,
+      }}
+    />
+  );
+}
 export function Button({
   title,
   onPress,
@@ -101,11 +123,11 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: colors.accent,
   },
-  secondary: { backgroundColor: "#e4e8ef" },
+  secondary: { backgroundColor: colors.secondary },
   buttonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#fff",
+    color: colors.onAccent,
     textAlign: "center",
   },
   field: { gap: 7, flexGrow: 1 },
@@ -118,7 +140,7 @@ export const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     color: colors.ink,
-    backgroundColor: "#fff",
+    backgroundColor: colors.soft,
   },
   error: { color: colors.error, fontSize: 15, lineHeight: 22 },
   inset: {

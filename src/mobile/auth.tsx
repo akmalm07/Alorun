@@ -9,18 +9,115 @@ import {
 } from "react";
 import {
   ActivityIndicator,
+  Animated,
   AppState,
+  Image,
+  PanResponder,
+  Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from "react-native";
 import type { Session } from "@supabase/supabase-js";
+import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, configured, supabase } from "./client";
-import { Button, ErrorMessage, Field, styles } from "./ui";
+import { Brand, Button, ErrorMessage, Field, styles } from "./ui";
 
 const SessionContext = createContext<Session | null>(null);
 export const useSession = () => useContext(SessionContext);
+
+function Welcome({ onContinue }: { onContinue: () => void }) {
+  const offset = useRef(new Animated.Value(0)).current;
+  const responder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) =>
+        gesture.dx < -10 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+      onPanResponderMove: (_, gesture) =>
+        offset.setValue(Math.min(0, gesture.dx)),
+      onPanResponderRelease: (_, gesture) => {
+        if (gesture.dx < -70) {
+          Animated.timing(offset, {
+            toValue: -400,
+            duration: 180,
+            useNativeDriver: true,
+          }).start(({ finished }) => {
+            if (finished) onContinue();
+          });
+        } else {
+          Animated.spring(offset, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(offset, { toValue: 0, useNativeDriver: true }).start();
+      },
+    }),
+  ).current;
+  return (
+    <View style={welcomeStyles.screen} {...responder.panHandlers}>
+      <Animated.View
+        style={[
+          welcomeStyles.logoFrame,
+          { transform: [{ translateX: offset }] },
+        ]}
+      >
+        <Image
+          // Metro requires a static require to bundle a local image asset.
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          source={require("../../assets/alorun_full_logo.png")}
+          style={welcomeStyles.logo}
+          resizeMode="contain"
+          accessibilityLabel="Alorun"
+        />
+      </Animated.View>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onContinue}
+        style={welcomeStyles.continue}
+      >
+        <Text style={welcomeStyles.continueText}>
+          Swipe left or tap to sign in
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const welcomeStyles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  logoFrame: {
+    width: "100%",
+    maxWidth: 320,
+    aspectRatio: 1,
+    borderRadius: 28,
+    overflow: "hidden",
+    backgroundColor: "#f9f3ed",
+  },
+  logo: { width: "100%", height: "100%" },
+  continue: {
+    position: "absolute",
+    bottom: 48,
+    minHeight: 48,
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  continueText: {
+    color: "#e5e5e5",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+});
+
 export function AuthGate({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(configured);
@@ -28,10 +125,20 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [error, setError] = useState<unknown>();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [method, setMethod] = useState<"password" | "code">("password");
+  const [resendAt, setResendAt] = useState(0);
+  const [now, setNow] = useState(Date.now());
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showSignIn, setShowSignIn] = useState(false);
   const queryClient = useQueryClient();
   const currentUser = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!resendAt) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [resendAt]);
   currentUser.current = session?.user.id;
   useEffect(() => {
     if (!supabase) return;
@@ -93,35 +200,27 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <ActivityIndicator accessibilityLabel="Loading session" />
       </View>
     );
-  if (!configured)
-    return (
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome to Alorun</Text>
-        <Text style={styles.body}>
-          Connect the app to your API and Supabase project to start planning.
-        </Text>
-        <Text style={styles.muted}>
-          Setup instructions are in the project README.
-        </Text>
-        <Button
-          title="Open encrypted chat and branches"
-          secondary
-          onPress={() => router.push("/encrypted-chat")}
-        />
-      </View>
-    );
   if (session && ready)
     return (
       <SessionContext.Provider value={session}>
         {children}
       </SessionContext.Provider>
     );
-  async function authenticate() {
+  if (!session && !showSignIn)
+    return <Welcome onContinue={() => setShowSignIn(true)} />;
+  async function authenticate(resend = false) {
     if (!supabase) return;
     setBusy(true);
     setError(undefined);
     try {
-      if (sentTo) {
+      if (method === "password") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+        if (error) throw error;
+        setPassword("");
+      } else if (sentTo && !resend) {
         const { error } = await supabase.auth.verifyOtp({
           email: sentTo,
           token: code.trim(),
@@ -135,9 +234,22 @@ export function AuthGate({ children }: { children: ReactNode }) {
         });
         if (error) throw error;
         setSentTo(normalized);
+        setNow(Date.now());
+        setResendAt(Date.now() + 60000);
       }
     } catch (e) {
-      setError(e);
+      const failure = e as { code?: string; status?: number };
+      setError(
+        new Error(
+          failure.code === "invalid_credentials"
+            ? "Email or password is incorrect. Try again or sign in with an email code."
+            : failure.code === "otp_expired"
+              ? "That code is invalid or expired. Check it or request a new code."
+              : failure.status === 429
+                ? "Too many attempts. Please wait a minute before trying again."
+                : "We couldn’t sign you in. Check your connection and try again.",
+        ),
+      );
     } finally {
       setBusy(false);
     }
@@ -147,9 +259,18 @@ export function AuthGate({ children }: { children: ReactNode }) {
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.content}
     >
-      <Text style={styles.title}>Welcome to Alorun</Text>
+      <Brand />
+      <Text style={styles.title}>
+        {sentTo
+          ? "Check your email"
+          : session
+            ? "Connecting your account"
+            : "Welcome back"}
+      </Text>
       <Text style={styles.body}>
-        Make room for what matters. Turn a goal into a plan you can follow.
+        {sentTo
+          ? "Enter your code to continue."
+          : "A little clarity. A next step that feels possible."}
       </Text>
       {session ? (
         <>
@@ -166,6 +287,19 @@ export function AuthGate({ children }: { children: ReactNode }) {
         </>
       ) : (
         <>
+          {!configured && (
+            <Text accessibilityRole="alert" style={styles.error}>
+              Sign-in is temporarily unavailable. Please check the app setup and
+              try again.
+            </Text>
+          )}
+          {!sentTo && (
+            <Text style={styles.muted}>
+              {method === "password"
+                ? "Sign in with your email and password."
+                : "New here? An email code creates your account. Returning users can use the same email."}
+            </Text>
+          )}
           {sentTo ? (
             <>
               <Text style={styles.body}>
@@ -177,6 +311,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
                 onChangeText={setCode}
                 keyboardType="number-pad"
                 autoComplete="one-time-code"
+                maxLength={8}
+                editable={!busy}
               />
             </>
           ) : (
@@ -187,6 +323,23 @@ export function AuthGate({ children }: { children: ReactNode }) {
               autoCapitalize="none"
               keyboardType="email-address"
               autoComplete="email"
+              autoCorrect={false}
+              editable={!busy}
+            />
+          )}
+          {method === "password" && (
+            <Field
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="current-password"
+              autoCapitalize="none"
+              editable={!busy}
+              onSubmitEditing={() => {
+                if (password && z.email().safeParse(email.trim()).success)
+                  void authenticate();
+              }}
             />
           )}
           <ErrorMessage error={error} />
@@ -194,13 +347,35 @@ export function AuthGate({ children }: { children: ReactNode }) {
             title={
               busy
                 ? "Please wait…"
-                : sentTo
-                  ? "Verify code"
-                  : "Send sign-in code"
+                : method === "password"
+                  ? "Sign in"
+                  : sentTo
+                    ? "Verify code"
+                    : "Send sign-in code"
             }
-            disabled={busy || (sentTo ? !code.trim() : !email.includes("@"))}
+            disabled={
+              !configured ||
+              busy ||
+              (method === "password"
+                ? !password || !z.email().safeParse(email.trim()).success
+                : sentTo
+                  ? !/^\d{6,8}$/.test(code.trim())
+                  : !z.email().safeParse(email.trim()).success)
+            }
             onPress={() => void authenticate()}
           />
+          {sentTo && (
+            <Button
+              title={
+                now < resendAt
+                  ? `Resend code in ${Math.ceil((resendAt - now) / 1000)}s`
+                  : "Resend code"
+              }
+              secondary
+              disabled={busy || now < resendAt}
+              onPress={() => void authenticate(true)}
+            />
+          )}
           {sentTo && (
             <Button
               title="Use another email"
@@ -208,7 +383,42 @@ export function AuthGate({ children }: { children: ReactNode }) {
               onPress={() => {
                 setSentTo(null);
                 setCode("");
+                setError(undefined);
               }}
+            />
+          )}
+          {!sentTo && (
+            <>
+              <Button
+                title={
+                  method === "password"
+                    ? "Use an email code / create account"
+                    : "Use a password instead"
+                }
+                secondary
+                disabled={busy}
+                onPress={() => {
+                  setMethod(method === "password" ? "code" : "password");
+                  setError(undefined);
+                  setPassword("");
+                }}
+              />
+              <Button
+                title="Continue with Google — coming soon"
+                secondary
+                disabled
+                onPress={() => {}}
+              />
+              <Text style={styles.muted}>
+                Google sign-in is not available yet.
+              </Text>
+            </>
+          )}
+          {!configured && (
+            <Button
+              title="Open encrypted chat and branches"
+              secondary
+              onPress={() => router.push("/encrypted-chat")}
             />
           )}
         </>
