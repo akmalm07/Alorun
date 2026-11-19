@@ -1,0 +1,56 @@
+{
+  "name": "alorun-extention",
+  "displayName": "Alorun",
+  "version": "0.1.0",
+  "description": "Customize your working pages and run reviewed browser actions.",
+  "private": true,
+  "scripts": {
+    "build": "plasmo build --target=chrome-mv3 && node scripts/build-runtime.mjs chrome-mv3",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src scripts tests",
+    "format:check": "prettier --check .",
+    "test": "tsx --test tests/*.test.ts",
+    "test:browser": "node scripts/test-browser.mjs",
+    "build:firefox": "plasmo build --target=firefox-mv3 && node scripts/build-runtime.mjs firefox-mv3",
+    "test:browser:firefox": "node scripts/test-browser.mjs --firefox"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.119.0",
+    "lucide-react": "0.468.0",
+    "plasmo": "0.90.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@types/chrome": "0.1.32",
+    "@types/node": "22.15.3",
+    "@types/react": "18.3.23",
+    "@types/react-dom": "18.3.7",
+    "@types/selenium-webdriver": "4.35.7",
+    "esbuild": "0.25.12",
+    "eslint": "9.39.2",
+    "globals": "16.5.0",
+    "prettier": "3.9.10",
+    "selenium-webdriver": "4.53.0",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.2"
+  },
+  "manifest": {
+    "minimum_chrome_version": "120",
+    "permissions": [
+      "activeTab",
+      "scripting",
+      "storage"
+    ],
+    "optional_host_permissions": [
+      "https://*/*",
+      "http://*/*"
+    ]
+  },
+  "alias": {
+    "zod": "./node_modules/zod/index.cjs"
+  }
+}

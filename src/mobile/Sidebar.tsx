@@ -1,8 +1,9 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { ThreadSummary } from "../shared/contracts";
+import { appDestinations, type AppDestination } from "../shared/navigation";
 import { isPinned } from "../domain/settings-chat";
 import { Button, colors, styles } from "./ui";
-export type SidebarDestination = "today" | "missions" | "settings" | "chat";
+export type SidebarDestination = AppDestination;
 export function Sidebar({
   threads,
   activeId,
@@ -39,14 +40,7 @@ export function Sidebar({
       </View>
       <Button title="New chat" disabled={busy} onPress={onNew} />
       <View style={{ gap: 4 }}>
-        {(
-          [
-            ["today", "Today & goals"],
-            ["chat", "Conversations"],
-            ["missions", "Missions"],
-            ["settings", "Settings chat"],
-          ] as const
-        ).map(([id, label]) => (
+        {appDestinations.map(([id, label]) => (
           <Pressable
             key={id}
             accessibilityRole="button"
