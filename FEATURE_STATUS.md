@@ -44,6 +44,14 @@ This file records what exists; [SPEC.md](SPEC.md) defines intended product behav
 | INFRA-03 | Cloud Run deployment assets for encrypted chat               | Implemented | [Dockerfile](Dockerfile), [Terraform](infra/terraform/README.md), [server](server/index.mjs)                                                                                               | Assets are for the existing encrypted-chat server, not an automatic deployment of the NestJS voice/Missions API. Live service state unverified.                                                          |
 | INFRA-04 | Missions bundle, private bucket and cron deployment assets   | Implemented | [builder](scripts/build-missions.mjs), [Supabase configuration](supabase/config.toml), [setup scripts](supabase/setup), [runbook](docs/missions.md)                                        | Requires configured secrets, reviewed migration/policy, deployment and explicit cron activation. Generated `worker.js` must be rebuilt; it is ignored by Git.                                            |
 
+## Browser extension
+
+| ID | Feature | Status | Evidence and scope |
+| --- | --- | --- | --- |
+| BROWSER-01 | Prompted page layout, shortcuts, Most visited, and opt-in restoration | Implemented | [Plasmo extension](extention/README.md), [page runtime](extention/src/browser/runtime.ts), [Chrome tests](extention/tests/browser.spec.ts), [Firefox tests](extention/tests/firefox.spec.ts). Layouts and visit counts stay in the browser profile. Saved layouts are scoped to the origin and route. |
+| BROWSER-02 | Reviewed page clicks and character-by-character text entry | Implemented | [Action grammar](extention/src/browser/plans.ts), [page runner](extention/src/browser/runtime.ts), [Chrome tests](extention/tests/browser.spec.ts), [Firefox tests](extention/tests/firefox.spec.ts). The visible cursor targets labeled controls in the current top-level page and stops on route change or cancellation. |
+| BROWSER-03 | Alorun workspace in the browser popup | Implemented | [Workspace](extention/src/components/Workspace.tsx), [shared navigation](src/shared/navigation.ts), [Chrome tests](extention/tests/browser.spec.ts), [Firefox tests](extention/tests/firefox.spec.ts). Today, Companion, Missions and Settings reuse the existing API. Browser integration uses a fixture, and production account access and store distribution remain unverified. |
+
 ## Missing or incomplete product work — build only these gaps
 
 | ID           | Capability                                                                  | Status      | Existing foundation / required scope                                                                                                                                 |
@@ -65,6 +73,10 @@ This file records what exists; [SPEC.md](SPEC.md) defines intended product behav
 | INTEGRATE-01 | Web/document research, email, arbitrary external actions, shared workspaces | Planned     | No generic executable tools exposed to models. Mission text inputs are scoped file context, not a general retrieval/research system.                                 |
 
 ## Verification and deployment evidence
+
+- 2026-11-19 Firefox verification: All five browser integration scenarios passed in Firefox ESR 153.7.0, and all five Chrome 158 regression scenarios passed. The Firefox Manifest V3 build uses a background script and optional site access. Both suites pre-grant loopback access and use an API fixture. Firefox ESR 140 could not initialize a test profile in this environment. Native permission dialogs, live sign-in, and store releases remain unverified.
+
+- 2026-11-19 Chrome extension: Manifest V3 built and the production popup opened in Chrome 158. Chromium integration exercised preview, save/forget across a browser restart, same-origin visit ranking, 320 px layout, cursor click and incremental text entry, cancellation, and connected workspace flows. The test profile grants loopback access for browser automation. Live Alorun sign-in and Chrome Web Store deployment remain unverified.
 
 - 2026-11-17 shared-navigation refinement: CHAT-06/UI-01 extended with reusable Sidebar and MainNavigation so Today/Your goals and Missions expose the same menu. Charcoal/green palette replaces pure black; route parameters target saved chats, new chats and Settings. Typecheck/lint and 38 tests passed (two database suites skipped). Pixel 8 Today/drawer observed; see [report](docs/tasks/shared-navigation.md). User authorized push to main; no production deployment implied.
 
